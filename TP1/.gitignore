@@ -1,0 +1,19 @@
+# Fichiers Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fichiers temporaires
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environnements virtuels
+venv/
+env/
+ENV/
+
+# Figures temporaires (optionnel si vous voulez les ignorer)
+# figures/*.pdf

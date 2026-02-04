@@ -1,0 +1,45 @@
+############################
+# Ignore unwanted folders
+############################
+
+templateOverleafPourTP_2026/
+Cours/
+
+############################
+# Ignore LaTeX build junk (optional but recommended)
+############################
+
+.DS_Store
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+_minted*
+*.minted
+
+############################
+# Ignore everything inside rapport folders
+############################
+
+TP1/rapport/*
+TP2/rapport/*
+TP3/rapport/*
+
+############################
+# EXCEPT these files
+############################
+
+!TP1/rapport/readme
+!TP1/rapport/compte_rendu
+!TP1/rapport/compile
+
+!TP2/rapport/readme
+!TP2/rapport/compte_rendu
+!TP2/rapport/compile
+
+!TP3/rapport/readme
+!TP3/rapport/compte_rendu
+!TP3/rapport/compile
