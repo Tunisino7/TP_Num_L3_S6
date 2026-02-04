@@ -1,0 +1,360 @@
+\documentclass{../latex/TP}
+
+\begin{document}
+
+\entete{Votre nom}{Numéro étudiant}{LU3PY126 FOAD}{TP 4 : Équation de Schrödinger}
+
+\begin{multicols}{2}
+\tableofcontents
+\end{multicols}
+\clearpage
+
+\section*{Introduction}
+
+\begin{paracol}{2}
+\textbf{Objectifs du TP :}
+\begin{itemize}[label=\ding{212}]
+    \item Résoudre l'équation de Schrödinger 1D par différences finies
+    \item Diagonaliser des matrices tridiagonales
+    \item Étudier trois potentiels : puits infini, harmonique, double puits
+    \item Comparer solutions numériques et théoriques
+    \item Analyser l'effet tunnel dans le double puits
+\end{itemize}
+
+\textbf{Organisation du code :}
+\begin{itemize}[label=\ding{212}]
+    \item Fichiers Python : \texttt{../python/q01\_q02.py} à \texttt{q14.py}
+    \item Graphiques : \texttt{../figures/*.pdf}
+    \item Bibliothèques : numpy, scipy, matplotlib
+\end{itemize}
+
+\switchcolumn
+
+\textbf{Méthode numérique :}\\
+On discrétise l'équation de Schrödinger stationnaire :
+\[
+-\frac{\hbar^2}{2m}\frac{d^2\psi}{dx^2} + V(x)\psi = E\psi
+\]
+
+La dérivée seconde devient :
+\[
+\frac{d^2\psi}{dx^2} \approx \frac{\psi_{i+1} - 2\psi_i + \psi_{i-1}}{\delta x^2}
+\]
+
+On obtient un problème de valeurs propres :
+\[
+\mathbf{H}\Psi = E\Psi
+\]
+
+avec $\mathbf{H}$ matrice tridiagonale.
+
+\textbf{Exécution :}
+\begin{verbatim}
+python run_all.py
+\end{verbatim}
+
+\end{paracol}
+\clearpage
+
+% ==================== QUESTIONS 1-2 ====================
+\section{Définition des potentiels}
+
+\subsection{Énoncé}
+Définir et tracer trois potentiels sur $[-L/2, L/2]$ avec $L=5$, $n=100$ :
+\begin{itemize}
+    \item Puits infini : $V(x) = 0$
+    \item Oscillateur harmonique : $V(x) = \frac{1}{2}x^2$
+    \item Double puits : polynôme degré 4 avec racines en $r_1, r_2, r_3, r_4$
+\end{itemize}
+
+\subsection{Code}
+Le code est situé dans \texttt{../python/q01\_q02.py}. Il définit trois fonctions:
+\begin{itemize}
+    \item \texttt{potentiel\_puits(x)} : retourne un array de zéros
+    \item \texttt{potentiel\_harmonique(x)} : retourne $x^2/2$
+    \item \texttt{potentiel\_double\_puits(x, a, r1, r2, r3, r4)} : retourne le polynôme
+\end{itemize}
+Puis il discrétise l'intervalle $[-L/2, L/2]$ et trace les trois potentiels.
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q01_q02.pdf}
+
+\textbf{Commentaire :}\\
+Les trois potentiels sont correctement définis. Le double puits présente deux minima symétriques séparés par une barrière centrale.
+\clearpage
+
+% ==================== QUESTION 3 ====================
+\section{Conditions aux limites}
+
+\subsection{Énoncé}
+Interpréter physiquement les conditions $\psi(-L/2) = \psi(L/2) = 0$.
+
+\subsection{Code}
+Le code est dans \texttt{q03.py}
+
+\subsection{Discussion}
+Les conditions $\psi(\pm L/2) = 0$ signifient que la particule ne peut pas exister aux bords du domaine. Cela équivaut à placer des murs infinis ($V \to \infty$) en $x = \pm L/2$.
+
+\textbf{Conséquences :}
+\begin{itemize}
+    \item La particule est confinée dans $[-L/2, L/2]$
+    \item États liés uniquement
+    \item Spectre discret d'énergies
+    \item Impact sur la précision : si $L$ est trop petit, les fonctions d'onde sont tronquées artificiellement
+\end{itemize}
+\clearpage
+
+% ==================== QUESTIONS 4-5 ====================
+\section{Construction et diagonalisation de l'hamiltonien}
+
+\subsection{Énoncé}
+\textbf{Q4 :} Construire la matrice hamiltonienne tridiagonale.
+
+\textbf{Q5 :} Diagonaliser avec \texttt{scipy.linalg.eigh\_tridiagonal}.
+
+\subsection{Code}
+Le code est dans \texttt{q04_q05.py}
+
+\subsection{Méthode}
+L'hamiltonien est une matrice tridiagonale $(n-2) \times (n-2)$ :
+\begin{itemize}
+    \item Diagonale : $d_i = \frac{2}{\delta x^2} + V_i$
+    \item Sous/sur-diagonale : $e_i = -\frac{1}{\delta x^2}$
+\end{itemize}
+
+La fonction \texttt{scipy.linalg.eigh\_tridiagonal} exploite la structure tridiagonale pour une diagonalisation efficace en $O(n^2)$ au lieu de $O(n^3)$.
+\clearpage
+
+% ==================== QUESTION 6 ====================
+\section{Puits infini : comparaison des énergies}
+
+\subsection{Énoncé}
+Comparer les énergies numériques avec la solution théorique :
+\[
+E_p = \frac{\pi^2(p+1)^2}{L^2}
+\]
+
+\subsection{Code}
+Le code est dans \texttt{q06.py}
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q06_puits_energies_n100_L5.pdf}
+
+\textbf{Commentaire :}\\
+L'accord est excellent pour les bas niveaux. Pour $p$ élevé, l'écart augmente car la longueur d'onde devient comparable à $\delta x$, violant la condition de discrétisation fine.
+\clearpage
+
+% ==================== QUESTION 7 ====================
+\section{Normalisation et visualisation des fonctions d'onde}
+
+\subsection{Énoncé}
+Normaliser les fonctions d'onde et tracer $|\psi_p(x)|^2$ décalées de $E_p$ pour $p=0,1,2$.
+
+\subsection{Code}
+Le code est dans \texttt{q07.py}
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q07_puits_fonctions_n100_L5.pdf}
+
+\textbf{Commentaire :}\\
+Les densités de probabilité montrent :
+\begin{itemize}
+    \item $p=0$ : pas de nœud, maximum au centre
+    \item $p=1$ : un nœud au centre
+    \item $p=2$ : deux nœuds
+\end{itemize}
+Le nombre de nœuds est égal à $p$ (nombre quantique).
+\clearpage
+
+% ==================== QUESTION 8 ====================
+\section{Comparaison détaillée numérique vs théorique}
+
+\subsection{Énoncé}
+Comparer $\psi_{num}$ et $\psi_{theo}$ pour $p=1$ (bon accord) et $p=55$ (mauvais accord).
+
+\subsection{Code}
+Le code est dans \texttt{q08.py}
+\clearpage
+
+\subsection{Résultats}
+\begin{paracol}{2}
+\includegraphics[width=\columnwidth]{../figures/q08_puits_comparaison_p1_n100_L5.pdf}
+\switchcolumn
+\textbf{Cas $p=1$ :}\\
+Accord excellent. La fonction d'onde a une longueur d'onde grande devant $\delta x$.
+\end{paracol}
+
+\begin{paracol}{2}
+\textbf{Cas $p=55$ :}\\
+Accord médiocre. Les oscillations rapides ne sont pas résolues : il faut au moins quelques points par oscillation. Augmenter $n$ résoudrait le problème.
+\switchcolumn
+\includegraphics[width=\columnwidth]{../figures/q08_puits_comparaison_p55_n100_L5.pdf}
+\end{paracol}
+\clearpage
+
+% ==================== QUESTION 9 ====================
+\section{Oscillateur harmonique : L=5}
+
+\subsection{Énoncé}
+Étudier $V(x) = \frac{1}{2}x^2$ avec $L=5$, $n=100$. Comparer avec :
+\[
+E_p = \left(p + \frac{1}{2}\right)\sqrt{2}
+\]
+
+\subsection{Code}
+Le code est dans \texttt{q09.py}
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q09_harmonique_energies_n100_L5.pdf}
+
+\textbf{Commentaire :}\\
+L'accord est bon pour les bas niveaux mais se dégrade rapidement. Raison : pour $E$ élevée, la fonction d'onde s'étend loin et est tronquée par les conditions $\psi(\pm L/2) = 0$. La particule "sent" les murs artificiels.
+\clearpage
+
+% ==================== QUESTION 10 ====================
+\section{Oscillateur harmonique : L=20}
+
+\subsection{Énoncé}
+Refaire Q9 avec $L=20$ pour étudier l'influence de $L$.
+
+\subsection{Code}
+Le code est dans \texttt{q10.py}
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q10_harmonique_energies_n100_L20.pdf}
+
+\textbf{Commentaire :}\\
+Avec $L=20$, l'accord est bien meilleur. Les conditions aux limites perturbent moins car la fonction d'onde décroît exponentiellement loin du centre. Inconvénient : $\delta x = L/(n-1)$ augmente donc la discrétisation est plus grossière. Compromis : augmenter $n$ en même temps que $L$.
+\clearpage
+
+% ==================== QUESTION 11 ====================
+\section{Fonctions d'onde de l'oscillateur harmonique}
+
+\subsection{Énoncé}
+Tracer $V(x)$ et $|\psi_p(x)|^2$ décalées de $E_p$ pour $p=0,1,2$ avec $L=20$, $n=100$.
+
+\subsection{Code}
+Le code est dans \texttt{q11.py}
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q11_harmonique_fonctions_n100_L20.pdf}
+
+\textbf{Commentaire :}\\
+\begin{itemize}
+    \item $p=0$ : gaussienne centrée (pas de nœud)
+    \item $p=1$ : un nœud au centre, densité nulle en $x=0$
+    \item $p=2$ : deux nœuds, trois lobes
+\end{itemize}
+Les maxima de densité correspondent aux points de retour classiques où $V(x) = E_p$ (vitesse classique nulle).
+\clearpage
+
+% ==================== QUESTION 12 ====================
+\section{Double puits symétrique (a=1)}
+
+\subsection{Énoncé}
+Étudier le potentiel double puits avec $a=1$, $r_1=-2$, $r_2=-0.5$, $r_3=0.5$, $r_4=2$, $L=20$, $n=1000$.
+
+\subsection{Code}
+Le code est dans \texttt{q12.py}
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q12_double_puits_sym_a1.pdf}
+
+\textbf{Commentaire :}\\
+Le potentiel est symétrique par rapport à $x=0$. Les états propres sont soit symétriques ($\psi(-x) = \psi(x)$) soit antisymétriques ($\psi(-x) = -\psi(x)$).
+
+\textbf{Doublets :}
+\begin{itemize}
+    \item $\psi_0$ : état fondamental symétrique
+    \item $\psi_1$ : premier excité antisymétrique, nœud en $x=0$
+    \item Faible écart $\Delta E = E_1 - E_0$ : effet tunnel significatif
+\end{itemize}
+
+La barrière centrale (faible avec $a=1$) permet un fort couplage entre les deux puits.
+\clearpage
+
+% ==================== QUESTION 13 ====================
+\section{Double puits symétrique profond (a=400)}
+
+\subsection{Énoncé}
+Refaire Q12 avec $a=400$ pour augmenter la hauteur de la barrière.
+
+\subsection{Code}
+Le code est dans \texttt{q13.py}
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q13_double_puits_sym_a400.pdf}
+
+\textbf{Commentaire :}\\
+Avec $a=400$, la barrière est bien plus haute. L'effet tunnel est fortement supprimé :
+\begin{itemize}
+    \item Les fonctions d'onde sont très localisées dans chaque puits
+    \item Amplitude quasi-nulle dans la région centrale
+    \item Doublets presque parfaitement dégénérés : $\Delta E \approx 0$
+    \item Limite : deux puits découplés avec spectres indépendants
+\end{itemize}
+\clearpage
+
+% ==================== QUESTION 14 ====================
+\section{Double puits asymétrique}
+
+\subsection{Énoncé}
+Refaire Q12 avec $r_3=0$ au lieu de $0.5$ pour briser la symétrie.
+
+\subsection{Code}
+Le code est dans \texttt{q14.py}
+\clearpage
+
+\subsection{Résultats}
+\includegraphics[width=\textwidth]{../figures/q14_double_puits_asym_a1.pdf}
+
+\textbf{Commentaire :}\\
+La symétrie est brisée : le puits gauche est plus large que le droit.
+
+\textbf{Conséquences :}
+\begin{itemize}
+    \item Les fonctions d'onde ne sont plus symétriques/antisymétriques
+    \item $\psi_0$ : localisée principalement dans le puits gauche (plus large, énergie plus basse)
+    \item $\psi_1$ : localisée principalement dans le puits droit
+    \item Plus de doublets quasi-dégénérés : levée de dégénérescence par brisure de symétrie
+    \item Chaque puits impose sa propre structure de niveaux
+\end{itemize}
+\clearpage
+
+% ==================== CONCLUSION ====================
+\section*{Conclusion}
+
+Ce TP a permis de :
+\begin{enumerate}
+    \item Implémenter la méthode des différences finies pour résoudre l'équation de Schrödinger 1D
+    \item Diagonaliser efficacement des matrices tridiagonales avec \texttt{scipy}
+    \item Comparer solutions numériques et analytiques pour le puits infini
+    \item Comprendre l'impact des paramètres $L$ et $n$ sur la précision
+    \item Étudier l'effet tunnel dans le double puits
+    \item Observer la levée de dégénérescence par brisure de symétrie
+\end{enumerate}
+
+\textbf{Limites de la méthode :}
+\begin{itemize}
+    \item Conditions aux limites artificielles : nécessite $L$ grand pour les potentiels non-confinés
+    \item Discrétisation spatiale : nécessite $\delta x$ petit devant la longueur d'onde
+    \item Compromis $L$ vs $n$ : augmenter $L$ améliore les conditions aux limites mais augmente $\delta x$ à $n$ fixé
+\end{itemize}
+
+\textbf{Extensions possibles :}
+\begin{itemize}
+    \item Potentiels 2D ou 3D (matrices plus complexes)
+    \item Dépendance temporelle : méthode Crank-Nicolson
+    \item Potentiels aléatoires : localisation d'Anderson
+    \item Systèmes à N corps : problème combinatoire
+\end{itemize}
+
+\end{document}
