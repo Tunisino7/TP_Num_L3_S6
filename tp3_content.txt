@@ -1,0 +1,600 @@
+TP 3
+Adsorption de particules sur une
+surface
+3.1
+
+Surface homogène
+
+L’exposition d’une surface cristalline à un gaz donne lieu à des phénomènes d’adsorption : les particules du gaz sont piégées sur la surface du cristal. Ce phénomène a de
+nombreuses applications, en particulier dans la réalisation de catalyseurs.
+Pour modéliser ce problème, on fait les hypothèses préliminaires suivantes :
+▷ La surface cristalline est un carré de côté L.
+▷ Les particules de gaz adsorbées sont modélisées par des disques de rayon R
+avec R ≪ L. Ces disques sont impénétrables, c’est-à-dire que deux particules ne
+peuvent pas se chevaucher. (Voir la figure 3.1a.)
+▷ Une fois qu’une molécule a été adsorbée, elle ne bouge plus et ne quitte plus la
+surface du cristal.
+La simulation fonctionne ainsi : on part d’une surface vide et, à chaque pas de temps,
+on essaye de rajouter une particule de gaz. La nouvelle particule arrive à un endroit
+aléatoire si elle ne chevauche aucune particule déjà présente, on la garde, sinon rien
+
+(a) Un exemple de particules sphériques
+adsorbées aléatoirement sur une surface.
+La particule indiquée en gris est la dernière
+que l’on a pu caser.
+
+(b) À gauche : configuration interdite car les particules débordent.
+À droite : configuration valide. Les particules sont à l’extrême
+limite de la zone autorisée.
+
+Figure 3.1 – Surface homogène
+27
+
+Sorbonne Université
+
+3P126 - TP phys. num.
+
+2025-2026
+
+ne se passe et le système n’est pas modifié. On fait ainsi de nombreux essais jusqu’à ce
+que l’on n’arrive plus à caser de nouvelles particules et on s’intéresse aux propriétés de
+l’état final, en particulier au nombre de particules que l’on a réussi à placer.
+Une particule de gaz adsorbée doit-être entièrement contenue dans le carré (voir
+figure 3.1b). Si on note (x, y) les coordonnées du centre de la particule, les valeurs
+autorisées pour x et y en fonction de L et de R sont comprises dans l’intervalle [R, L − R].
+Deux particules de coordonnées (x, y) et (x′ , y′ ) se chevauchent si leur distance est
+inférieure à 2R, c’est à dire :
+q
+
+(x − x′ )2 + y − y′ 2 < 2R
+On peut donner une borne supérieure au nombre de particules de rayon R que l’on
+peut espérer caser sans chevauchement dans un carré de côté L, en prenant le rapport
+entre la surface du carré et la surface d’un cercle :
+L2
+πR2
+Sans chevauchement cette borne ne sera évidemment jamais atteint, car il restera toujours des surfaces non-couvertes par des cercles. N_MAX sera utile pour réserver à
+l’avance un nombre suffisant de cases dans un tableau qui contiendra les coordonnées des cercles.
+N_MAX =
+
+1.
+
+Écrire un programme capable de simuler ce phénomène d’adsorption. Le programme
+doit essayer de placer successivement des particules dans le système jusqu’à ce qu’il
+y ait eu MAX_TRIES échecs consécutifs, c’est-à-dire qu’après MAX_TRIES d’essais pour
+placer la dernière particule, il n’a trouvé aucun emplacement libre.
+A la fin le programme devra afficher le nombre de particules placées ainsi que le
+rapport entre la surface totale occupée par toutes les particules adsorbées et la surface
+du carré. Les constantes L et R et MAX_TRIES seront des constantes et l’on pourra prendre,
+par exemple
+L = 20.0
+R = 0.4
+MAX_TRIES = 1000
+
+3.1.1
+
+Conseils pour la mise en place du programme
+
+Pour réaliser votre programme de la question précédente, voici un certain nombre
+de conseils sur les ingrédients à mettre en place. Ces conseils sont là pour vous aider
+à une mise-en-place rapide et robuste par rapport aux “bugs”, mais vous êtes libre de
+les suivre ou pas et de faire vos propres choix des éléments de langage du python qui
+s’offrent ici.
+3.1.1.1
+
+La structure de données pour représenter les cercles
+
+Comme tous les cercles ont le même rayon R, la seule chose qu’il faut enregistrer
+dans la mémoire vive sont les coordonnées (x, y) des centres des cercles. Pour cela on
+utilise ici deux tableaux numpy, un pour x et un pour y.
+Lors de l’adsorption les cercles seront ajoutés successivement à la surface et devront alors également être enregistrés dans la mémoire vive successivement. Comme
+le processus est aléatoire, il est impossible de savoir l’avance combien de cercles seront
+
+TP 3
+
+29
+
+enregistrés à la fin d’un remplissage du carré. On sait par contre que ce nombre n’atteindra jamais N_MAX (voir plus haut). La structure de données adaptée ici est un “tableau
+dynamique”, c’est à dire un tableau qui peut changer de taille, comme ici croître d’une
+case avec chaque ajout de cercle.
+Ici le tableau dynamique est implémenté avec un tableau statique de la bibliothèque
+numpy de taille N_MAX et grâce à l’utilisation d’une variable n qui représente le nombre
+de cercles déjà présents dans le système. Attention la taille d’un tableau est un entier,
+donc aussi N_MAX doit être un entier.
+On définira, dans la fonction gérant l’évolution de notre système, trois variables
+pour indiquer le nombre et la position des cercles adsorbées :
+n = 0
+# nombre de cercles déjà présents dans le système
+x = np.empty(N_MAX)
+# x[i] est l’abscisse du i-ème cercle présent
+y = np.empty(N_MAX)
+# y[i] est l’ordonnée du i-ème cercle présent
+Ces variables seront ensuite transmises par argument aux différentes fonctions qui
+les utilisent et/ou les mettent à jour. Il faut noter que x[i] et y[i] ne sont définis que
+pour 0 ≤ i < n, donc pour parcourir les coordonnées des cercles déjà adsorbés, on fait :
+for i in range(n):
+print(x[i], " ", y[i])
+Au départ on a n=0, c’est cette variable qui détermine l’emplacement des deux
+tableaux où on doit ajouter un nouveau cercle : x[n] = x_new. Après chaque ajout n est
+incrémenté de un. Par construction n doit toujours rester bien inférieur à N_MAX, sinon
+il s’agit d’un bug. Pour vider la surface il suffit de faire n=0, pas besoin d’initialiser les
+valeurs des tableaux x et y ici.
+3.1.1.2
+
+L’organisation du code
+
+Une bonne manière d’écrire le programme est d’utiliser les fonctions suivantes :
+▷ Une fonction coord(L, R) qui renvoie une valeur aléatoire dans l’intervalle autorisé pour la coordonnée x ou y de la nouvelle particule qu’on essaye de placer. On
+n’a besoin d’écrire qu’une seule fonction coord(L, R) pour les deux coordonnées
+x et y, comme il s’agit d’une surface carrée. Pour obtenir les deux nouvelles coordonnées x_new et y_new, on appellera coord(L, R) deux fois. On n’utilise pas
+ici rng.random() de numpy, mais np.random.rand() pour générer un nombre
+aléatoire réel entre 0 et 1. Cela évite de devoir passer un objet rng à travers les
+fonctions, mais aussi surtout d’être compatible avec numba, car rng.random() ne
+fonctionne pas avec numba.
+▷ Une fonction place_libre(n, x, y, x_new, y_new) qui vérifie si pour les nouvelles coordonnées x_new et y_new la place est libre, i.e. qu’il n’y a pas de chevauchement avec les particules déjà placées. Cette fonction retourne 0 si la place
+n’est pas libre et 1 si la place est libre. Quand il n’y a pas encore de particules
+adsorbées, n=0, la fonction doit bien sûr retourner 1. Sinon pour n>0 elle doit
+calculer dans une boucle toutes les distances entre le centre (x_new, y_new) de la
+nouvelle particule et les centres des particules déjà adsorbés. Dès qu’elle trouve
+une distance inférieure à 2R, alors elle peut arrêter la boucle avec break.
+▷ Une fonction remplissage(L, R, MAX_TRIES) qui gère l’évolution du système
+pour arriver à un remplissage de la surface, jusqu’à on a MAX_TRIES échecs consécutifs. Elle renvoie le nombre de cercles adsorbés.
+
+Sorbonne Université
+
+3P126 - TP phys. num.
+
+2025-2026
+
+La fonction remplissage doit effectuer plusieurs tâches :
+def remplissage(L, R, MAX_TRIES):
+... # créer tableaux numpy x et y pour coordonnées des cercles
+n = 0
+echecs = 0
+while echecs < MAX_TRIES:
+# tirage aléatoire de coordonnées pour placer un nouveau cercle
+x_new = coord(L, R)
+y_new = coord(L, R)
+# Test si l’emplacement est libre:
+libre = place_libre(n, x, y, x_new, y_new)
+# Ajout de cercle si emplacement libre
+if libre == 1:
+... # ajout du nouveau cercle dans les tableaux numpy x et y
+echecs = 0 # remettre le compteur à zéro pour le prochain
+,→ cercle
+else:
+echecs += 1 #incrémenter échecs
+# fin boucle while
+return x[:n], y[:n], n # retourner la partie des tableaux x et y
+,→ qui a été remplie et le nombre de cercles adsorbés
+
+3.1.2
+2.
+
+Analyse des résultats
+
+Appeler votre fonction remplissage avec les paramètres donnés plus haut et visualiser
+la configuration finale. Pour cela vous pouvez utiliser ce code 1 utilisant matplotlib :
+import matplotlib.pylab as plt
+import matplotlib # pour collections
+# crée une liste d’objets "Circle" de matplotlib avec les coordonnées
+,→ extraites des tableaux x et y :
+circles = [plt.Circle((xi,yi), radius=R, linewidth=0, color=’b’) for
+,→ xi,yi in zip(x,y)]
+# crée une "collection" des cercles pour matplotlib, afin de tracer tous
+,→ les cercles d’un seul coup (c’est mieux au niveau temps de calcul):
+c = matplotlib.collections.PatchCollection(circles)
+plt.scatter(x,y,s=1) # nécessaire pour avoir les bons axes
+plt.axis(’scaled’) # pour un avoir un carré et pas un rectangle
+plt.xlim(0, L)
+plt.ylim(0, L)
+plt.gca().add_collection(c) # tracer la collection de cercles
+plt.savefig("graph02.pdf", bbox_inches=’tight’)
+plt.show()
+Vérifier bien qu’il n’y a pas de chevauchement entre les cercles et qu’aucun cercle
+dépasse les bords du carré. Une fois que vous avez ainsi graphiquement vérifié que
+1. trouvé en partie ici : https://stackoverflow.com/questions/48172928/
+
+TP 3
+
+31
+
+votre programme fonctionne bien, enlever pour la suite (dans un nouveau fichier
+prog03.py) les lignes de code qui servent à afficher les cercles.
+3.
+
+Modifier votre programme pour que l’expérience soit faite M=20 fois, afin de calculer la
+moyenne sur toutes ces expériences du nombre de particules adsorbées et de fraction de
+la surface du carré qu’elles occupent. Ici bien sûr on ne visualise pas les configurations
+obtenues. Calculer aussi l’écart-type de ces deux variables mesurées. Vous pouvez
+utiliser ici les fonctions numpy np.mean() et np.std(). Comme ici on a deux grandeurs
+A et B (ici n et η) qui sont reliées simplement par un facteur d’échelle, il suffit de faire
+le calcul de l’écart-type pour une seule grandeur, puis d’appliquer ce facteur d’échelle
+pour obtenir l’écart-type de l’autre grandeur :
+Supposons que bi = k · ai , alors on obtient par simple insertion dans la formule de
+l’écart-type :
+σ2B = k2 · σ2A
+Pour vérifier vos résultats, voici les valeurs approximatives qu’on devrait obtenir :
+▷ La moyenne du nombre de particules adsorbées : < n >= 373 ± 8, 4
+▷ La moyenne de la fraction de surface : η =< n > ·πR2 /L2 = 0, 47 ± 0, 01
+
+4.
+
+Avec une simple comparaison de valeurs sans faire un nouveau script python : Comment se comparent les valeurs obtenues à la fraction qu’on pourrait idéalement occuper
+d’une façon ordonnée ?
+Voici deux exemples d’empilement ordonné : l’empilement carré et hexagonal
+(voir figure 3.2). Pour l’empilement carré
+d’une surface avec L = n · 2R la fraction
+de surface occupée est simplement :
+πR2 π
+= = 0, 785
+4R2
+4
+L’empilement hexagonal est l’empilement le plus compact possible pour des
+cercles de même taille, ce qui a été démontré par Joseph Louis Lagrange en 1773. La
+fraction de surface occupée se calcule par Figure 3.2 – Empilement ordonné, à gauche :
+exemple comme ceci :
+empilement carré, à droite : empilement
+On suppose une surface rectangulaire hexagonal
+L x H, avec L = n · 2R et m étant le nombre
+de lignes de cercles. Le nombre de cercles
+pour une surface
+infinie (L → ∞) est alors égale à m · n. La distance entre deux lignes est
+√
+égale à h = 3R = 1, 73R, comme les centres de trois cercles sont reliés par un triangle
+équilatéral tel qu’on voit dans la figure 3.2, ce qui donne la relation R2 + h2 = 4R2 . Donc
+la hauteur H de la surface peut être exprimé comme ceci, si on suppose un très grand
+nombre de lignes m :
+η=
+
+√
+H = 2R + (m − 1)h ≈ m · h = m 3R
+Au final on obtient pour l’empilement hexagonal d’une surface L x H très grande
+par rapport à R :
+η=
+
+m · n · πR2
+m · n · πR2
+π
+1 √
+=
+= √ = π 3 = 0, 907
+√
+L·H
+n · 2R · m 3R 2 3 6
+
+Sorbonne Université
+
+3P126 - TP phys. num.
+
+2025-2026
+
+Figure 3.4 – Modèle d’adsorption sur un réseau d’atomes, ici en cercles pleins avec
+croix. Les particules de gaz, ici en cercles avec tirets, peuvent soit s’adsorber dans tous
+les cas, si d < r_surf ou alors seulement avec une certaine probabilité, si d > r_surf.
+Comme les atomes ont des coordonnées entières (0,1,2,...), il est très facile de trouver
+l’atome le plus proche à partir des coordonnées de la particule de gaz : Il suffit de les
+arrondir vers l’entier le plus proche, ici par exemple : (2,6|0,4) => (3|0).
+
+3.2
+
+Surface structurée
+
+On a jusque-là modélisé ce problème
+en considérant la surface d’adsorption
+comme parfaitement homogène. En fait, il
+y a des interactions entre les atomes de la
+surface d’adsorption et les particules du
+gaz, et il se trouve que les particules du
+gaz s’adsorbent plus facilement à proximité des atomes de la surface d’adsorption.
+Pour prendre le cas le plus simple,
+on suppose que les atomes de la surface
+d’adoption sont organisés selon un réseau
+cristallin carré de côté 1 (voir figure 3.3) :
+il y a un atome de la surface en tous les
+points de coordonnées (x, y) où x et y sont Figure 3.3 – Surface d’adsorption avec sa
+des entiers compris entre 0 et L.
+structure atomique, les atomes étant orgaDécrire précisément ces interactions nisés en réseau carré.
+est difficile, mais on obtient de bons résultats avec le modèle simplifié suivant
+(voir figure 3.4) :
+▷ On suppose qu’il existe une distance caractéristique r_surf qui décrit la portée
+de l’interaction entre les atomes de la surface et les particules du gaz.
+▷ Si une particule du gaz essaye de s’adsorber à une distance inférieure à r_surf
+de l’un des atomes de la surface, l’adsorption a toujours lieu.
+▷ Si, au contraire, une particule du gaz essaye de s’adsorber à une distance supérieure à r_surf de tous les atomes de la surface, l’adsorption n’a lieu qu’avec une
+probabilité exp(−U/T) où U > 0 représente le “coût” énergétique à se placer loin
+
+TP 3
+
+33
+des particules de la surface et où T représente la température. (Pour être parfaitement précis, T est en fait la température en Kelvin multipliée par la constante de
+Boltzmann kB .)
+
+(Le modèle qu’on vient de décrire est une variante de “l’algorithme de Métropolis”.
+L’algorithme de Métropolis est très répandu en physique et ailleurs. Voir l’article original de Nicholas Metropolis et al. (1953) sur moodle.)
+5.
+
+Pour quelle valeur de T retrouve-t-on le modèle de la première partie ? Comment
+pourrait-on décrire en quelques mots le modèle obtenu en prenant T = 0 ?
+
+3.2.1
+6.
+
+Mise en place du programme
+
+Modifier votre programme pour prendre en compte les atomes de la surface et la
+température. La distance r_surf et l’énergie U seront définies par des constantes et
+l’on pourra prendre, par exemple,
+r_surf = 0.05
+U = 10.0
+
+Il faudra
+▷ Définir une fonction dist_latt(x_new, y_new) qui renvoie la distance du centre
+de la particule de gaz de coordonnées (x_new, y_new) à l’atome le plus proche
+de la surface d’adsorption. On pourra utiliser la fonction np.rint de numpy qui
+renvoie l’entier le plus proche de son argument (voir figure 3.4 pourquoi cela est
+utile).
+▷ Modifier la fonction remplissage. Cette fonction prend désormais en argument
+la température en plus : int remplissage(..., T) et doit implémenter l’algorithme décrit.
+▷ Modifier votre programme pour simuler le modèle à une température donnée
+(par exemple, T = 0 avec MAX_TRIES = 10000).
+Quelques aides :
+▷ Pour accepter l’adsorption seulement avec la probabilité p = exp(−U/T) on pourra
+utiliser np.random.rand() qui fournit un nombre (pseudo-)aléatoire entre zéro
+et un d’une manière uniforme. La probabilité que la condition np.random.rand
+() < p est vraie est alors égale à p, si p ∈ [0, 1]. Comme U > 0 et T ≥ 0, on a
+bien exp(−U/T) ∈ [0, 1] et on peut alors utiliser np.random.rand() < exp(-U/T)
+comme condition pour accepter l’adsorption pour les cas d > r_surf.
+▷ Pour pouvoir inclure ici le cas T = 0, il faut transformer cette condition en : T*log
+(np.random.rand()) < -U
+
+3.2.2
+7.
+
+Dépendance de la température
+
+Comme avant utiliser matplotlib pour visualiser séparément les configurations finales
+obtenues pour ces températures T : 0, 1, 2, 5 et 10, (voir au début de la section 3.1.2 avec
+M=1). Décrivez qualitativement ce que vous observez. Surtout pour des températures
+proche de zéro il faut utiliser MAX_TRIES = 10000 pour éviter d’avoir trop de trous à
+cause d’une recherche pas assez profonde.
+
+Sorbonne Université
+
+3P126 - TP phys. num.
+
+2025-2026
+
+8.
+
+Modifier votre programme pour faire M=100 simulations indépendantes pour chaque
+température entre 0 et 10 d’un pas de ∆T = 0, 5, et tracer le graphe de la fraction
+moyenne de la surface occupée en fonction de la température. Utiliser ici un MAX_TRIES
+= 10000. Vue la lenteur du calcul avec python de base, il est nécessaire d’utiliser numba
+ici, voir la section 3.4.1.
+
+9.
+
+En ayant analysé les configurations avec matplotlib (question plus haut), comment
+peut-on expliquer la courbe de la question précédente ? Peut-on définir une ”température critique” ? Avez vous une prédiction théorique pour la valeur de la fraction à basse
+température ?
+
+3.3
+
+Pour aller plus loin : MAX_TRIES et numba
+
+Revenons sur la partie avec une surface homogène :
+10.
+
+Répéter pour plusieurs valeurs de MAX_TRIES le calcul de la fraction moyenne (taux) de
+surface occupée par les atomes adsorbés ainsi que l’écart-type. Augmenter MAX_TRIES
+avec un facteur deux entre chaque simulation, comme ceci : 1000, 2000, 4000, ..., 32000.
+Utiliser M=20 répétitions seulement pour limiter le temps de calcul. Tracer la fraction
+moyenne de surface occupée en fonction de MAX_TRIES en échelle semi-log. Pour
+afficher également l’écart-type sous forme de barres d’erreurs, vous pouvez utiliser
+errorbar de matplotlib à la place de la commande plot :
+plt.errorbar(max_tries, moy_fracSurface, yerr = ecart_fracSurface)
+Commentez le graphe.
+
+11.
+
+Accélérer l’exécution de votre code avec numba, voir section 3.4.1. Essayer d’étendre la
+courbe jusqu’à MAX_TRIES = 512.000 et avec M=100 répétitions. Commentez le nouveau
+graphe.
+
+3.4
+
+Annexe
+
+3.4.1
+
+numba
+
+Voir aussi les exercices de TD sur numba sur moodle, il s’agit d’un tutoriel pour apprendre
+à utiliser numba. Puis quelques points importants sont notés à la fin du TP1, section 1.3.
+Pour que le temps de calcul ne rend pas impossible la réalisation de certains exercices, l’utilisation de numba devient incontournable ici, car on peut obtenir avec numba
+une accélération de trois ordres de grandeurs ici. Pour pouvoir utiliser numba, il faut
+utiliser np.random.rand() et non rng.random() pour générer un nombre aléatoire réel
+entre 0 et 1, comme indiqué au début de ce TP. De plus il faut faire attention que N_MAX
+est un entier, car comme le python de base, numba n’accepte pas np.empty(N_MAX)
+avec une valeur réelle pour N_MAX. Cela produit un message d’erreur de numba, qui
+sont en général plus difficile à comprendre que les messages d’erreurs de python de
+base.
+Ici on ajoute devant (ligne au-dessus du def ...) la définition des trois fonctions
+coord, place_libre et remplissage l’indication à numba de compiler ces fonctions :
+from numba import njit
+@njit
+def coord(L, R) :
+
+TP 3
+
+35
+
+...
+@njit
+def place_libre(n, x, y, x_new, y_new):
+...
+@njit
+def remplissage(L, R, MAX_TRIES) :
+...
+
+3.4.2
+
+Liens sur l’empilement compact
+
+En sciences on peut aussi faire des expériences amusantes et les publier dans un
+journal important comme “Science”. Comme cette expérience avec laquelle les chercheurs ont démontrés que l’empilement au hasard des bonbons M&Ms dans une sphère
+donne un empilement presque aussi dense que l’empilement ordonné le plus compact
+de sphères de taille égale (empilement cubique à faces centrées ou empilement hexagonal compact) :
+http://www.ncbi.nlm.nih.gov/pubmed/14963324
+(voir aussi sur moodle pour avoir l’article)
+Cette bonne performance des bonbons M&Ms est dû à leur forme ellipsoïdale, qui
+permet un meilleur empilement.
+
+TP 4
+Valeurs propres et vecteurs propres :
+Résolution de l’équation de
+Schrödinger par un calcul de
+différences finies
+L’équation de Schrödinger Hψ = Eψ est l’équation maîtresse de la mécanique quantique : résoudre un problème de physique quantique revient en général à résoudre
+cette équation dans le cas considéré. Malheureusement, même dans les cas simples, on
+se heurte à des problèmes techniques souvent ardus quand on cherche à le faire ; fort
+souvent même, il n’y a pas de solution analytique du tout ! Dans le présent exercice, on
+étudiera une méthode simple, peu exigeante sur le plan de la programmation (il s’agit
+essentiellement de faire appel à un sous-programme de bibliothèque déjà existant) pour
+tenter de résoudre numériquement des problèmes dont la solution est connue (puits
+infini, oscillateur harmonique) afin de contrôler la méthode, puis dans des cas où la
+solution n’est pas connue. Ce sera aussi l’occasion de se familiariser à peu de frais avec
+cet objet étrange qu’est la fonction d’onde ψ.
+On se restreint ici à l’équation de Schrödinger stationnaire (ou non-dépendante du
+temps) à une particule et à une dimension. Il s’agit donc de chercher les états propres
+d’une particule dans un potentiel stationnaire 1 .
+Dans ces conditions, l’équation de Schrödinger s’écrit :
+ℏ2 d2 ψ(x)
++ V(x) ψ(x) = E ψ(x)
+(4.1)
+2m dx2
+où V et ψ sont des fonctions de l’abscisse x, V(x) est l’énergie potentielle de la
+particule au point d’abscisse x, ψ(x) la fonction d’onde qui décrit l’état de la particule et
+E l’énergie associée à cet état ; m est la masse de la particule et ℏ la constante de Planck.
+Résoudre l’équation (4.1) revient à trouver les fonctions d’ondes ψ(x) et les énergies E
+pour lesquelles l’équation est vérifiée : il s’agit d’une équation différentielle du second
+ordre dont on connaît les solutions analytiques dans certains cas (V = Cst, V = 12 kx2 ,
+. . .), mais reste insoluble dans bien des cas d’où la recherche de solutions numériques.
+Afin de simplifier les notations, on utilisera un système d’unités ad hoc dans lequel
+ℏ2
+= 1, donc l’équation (4.1) devient :
+2m
+d2 ψ(x)
+−
++ V(x) ψ(x) = E ψ(x)
+(4.2)
+dx2
+−
+
+1. voir le cours de physique quantique.
+
+37
+
+Sorbonne Université
+
+3P126 - TP phys. num.
+
+ψ(x)
+
+V4
+V3
+
+V(x)
+
+ψi+1 − ψi
+
+V2
+
+2025-2026
+
+dψ
+dx
+
+δ
+δ
+dψ
+dψ
+x+ x −
+x− x
+dx ( i 2 ) dx ( i 2 )
+δx
+
+δx
+
+V1
+
+ψi − ψi−1
+δx
+
+V0
+x0
+
+x1
+
+x2
+
+x3
+
+x4
+
+x
+
+xi−1
+
+xi −
+
+δx
+2
+
+xi
+
+xi +
+
+δx
+2
+
+xi+1 x
+
+xi−1
+
+xi −
+
+δx
+2
+
+xi
+
+xi +
+
+δx
+2
+
+xi+1 x
+
+Figure 4.1 – Gauche : Illustration de la discrétisation de x ainsi que des conséquences
+pour le potentiel V et la fonction d’onde ψ. Centre : La dérivée première de ψ est
+approchée à xi ± δx /2. Droite : La dérivée seconde de ψ est approchée à xi .
+
+4.1
+
+La méthode des différences finies.
+
+Le problème est légèrement différent de celui de la résolution d’une (ou plusieurs)
+équation(s) du mouvement où l’on calcule de proche en proche les valeurs que prend la
+ou les fonctions recherchées : ici, on veut simultanément toutes les valeurs de ψ(x) et de
+surcroît E est aussi une inconnue. Les méthodes de type Runge-Kutta ne conviennent
+donc pas, il faut en trouver d’autres.
+La méthode des différences finies en est une possible. Elle consiste en une discrétisation du problème, c’est-à-dire que l’on fait l’approximation de remplacer la variable
+continue x par une variable discrète xi :
+xi = −L/2 + i · δx , i ∈ [0, n − 1]
+où i est un indice entier. La droite infinie est évidemment remplacée par un segment fini
+de longueur L = (n − 1)δx , centré autour de zéro, on couvre alors l’intervalle [−L/2, L/2].
+Cela entraîne que δ doit être “petit”, c’est-à-dire sensiblement plus petit qu’une
+distance “typique” sur laquelle la fonction d’onde varie sensiblement. Par ailleurs, L
+doit être “presque” infini, soit, plus grand que le domaine dans lequel la particule peut
+se déplacer. Autrement dit, n doit être “grand”.
